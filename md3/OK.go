@@ -116,6 +116,7 @@ func main() {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
+	_, _ = reader.ReadString('\n')
 	fmt.Println("接下来请选择你的英雄：Add or Update or Delete or Show")
 	for {
 		fmt.Printf("请输入操作: ")
@@ -170,3 +171,4 @@ func main() {
 		}
 	}
 }
+
