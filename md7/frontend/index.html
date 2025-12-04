@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - 任务管理</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        /* 头部样式 */
+        .header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            font-size: 2.2rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .auth-status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .auth-status:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* 主要内容区域 */
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        /* 左侧认证面板 */
+        .auth-panel {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 40px;
+            border-right: 1px solid #e9ecef;
+        }
+        
+        /* 标签按钮 */
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            color: #6a11cb;
+            position: relative;
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #6a11cb;
+        }
+        
+        /* 表单样式 */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .form-group input:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+        }
+        
+        .form-footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .form-footer a {
+            color: #6a11cb;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(106, 17, 203, 0.2);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(17, 153, 142, 0.2);
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+        
+        /* 右侧任务面板 */
+        .task-panel {
+            flex: 2;
+            padding: 40px;
+            background: white;
+            display: none;
+        }
+        
+        .task-panel.active {
+            display: block;
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .task-header h2 {
+            color: #343a40;
+            font-size: 1.6rem;
+        }
+        
+        .task-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* 任务统计 */
+        .task-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .stat-icon.total {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+        
+        .stat-icon.pending {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+        }
+        
+        .stat-icon.completed {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .stat-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .stat-info p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        /* 任务列表 */
+        .task-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .task-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .task-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .task-item.completed {
+            background: #f8fff9;
+            border-color: #d4edda;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        
+        .task-title.completed {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        
+        .task-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .complete-btn {
+            background: #e8f5e9;
+            color: #28a745;
+        }
+        
+        .complete-btn:hover {
+            background: #28a745;
+            color: white;
+        }
+        
+        .edit-btn {
+            background: #e3f2fd;
+            color: #007bff;
+        }
+        
+        .edit-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+        
+        .delete-btn {
+            background: #fde8e8;
+            color: #dc3545;
+        }
+        
+        .delete-btn:hover {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.3rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* 用户信息 */
+        .user-info {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-item .label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .info-item .value {
+            color: #6c757d;
+        }
+        
+        /* 底部 */
+        .footer {
+            padding: 20px 40px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+        
+        .server-status {
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        
+        /* 消息提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1100;
+            max-width: 350px;
+        }
+        
+        .toast.active {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #6a11cb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .auth-panel {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .task-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .task-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .task-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .btn-small {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">📝</div>
+                <h1>Todo App - 任务管理</h1>
+            </div>
+            <div class="auth-status" id="authStatus" onclick="showUserInfo()">
+                <span class="status-text">未登录</span>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 左侧：认证面板 -->
+            <div class="auth-panel" id="authPanel">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('login')">登录</button>
+                    <button class="tab-btn" onclick="switchTab('register')">注册</button>
+                </div>
+
+                <!-- 登录表单 -->
+                <div class="tab-content active" id="loginTab">
+                    <div class="form-group">
+                        <label for="loginName">用户名</label>
+                        <input type="text" id="loginName" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">密码</label>
+                        <input type="password" id="loginPassword" placeholder="请输入密码" required>
+                    </div>
+                    <button class="btn btn-primary" onclick="login()">
+                        登录
+                    </button>
+                    <div class="form-footer">
+                        <p>还没有账号？ <a href="#" onclick="switchTab('register')">立即注册</a></p>
+                    </div>
+                </div>
+
+                <!-- 注册表单 -->
+                <div class="tab-content" id="registerTab">
+                    <div class="form-group">
+                        <label for="registerName">用户名</label>
+                        <input type="text" id="registerName" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerSchool">学校</label>
+                        <input type="text" id="registerSchool" placeholder="请输入学校名称（可选）">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">密码</label>
+                        <input type="password" id="registerPassword" placeholder="至少6位字符" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">确认密码</label>
+                        <input type="password" id="confirmPassword" placeholder="再次输入密码" required>
+                    </div>
+                    <button class="btn btn-success" onclick="register()">
+                        注册
+                    </button>
+                    <div class="form-footer">
+                        <p>已有账号？ <a href="#" onclick="switchTab('login')">立即登录</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：任务管理面板 -->
+            <div class="task-panel" id="taskPanel">
+                <div class="task-header">
+                    <h2>我的任务</h2>
+                    <div class="task-controls">
+                        <button class="btn btn-primary btn-small" onclick="refreshTasks()">
+                            刷新
+                        </button>
+                        <button class="btn btn-success btn-small" onclick="showAddTaskModal()">
+                            添加任务
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 任务统计 -->
+                <div class="task-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon total">📋</div>
+                        <div class="stat-info">
+                            <h3 id="totalTasks">0</h3>
+                            <p>总任务数</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon pending">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingTasks">0</h3>
+                            <p>待完成</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon completed">✅</div>
+                        <div class="stat-info">
+                            <h3 id="completedTasks">0</h3>
+                            <p>已完成</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 任务列表 -->
+                <div class="task-list" id="taskList">
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>暂无任务</h3>
+                        <p>点击右上角"添加任务"按钮开始创建</p>
+                    </div>
+                    <!-- 任务项将通过JS动态添加 -->
+                </div>
+            </div>
+        </main>
+
+        <!-- 添加任务模态框 -->
+        <div class="modal" id="addTaskModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加新任务</h3>
+                    <button class="close-btn" onclick="closeAddTaskModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="taskTitle">任务标题</label>
+                        <input type="text" id="taskTitle" placeholder="请输入任务标题" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="closeAddTaskModal()">取消</button>
+                    <button class="btn btn-success" onclick="addTask()">添加</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户信息模态框 -->
+        <div class="modal" id="userInfoModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>用户信息</h3>
+                    <button class="close-btn" onclick="closeUserInfoModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="user-info">
+                        <div class="info-item">
+                            <span class="label">用户名：</span>
+                            <span class="value" id="infoName">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">学校：</span>
+                            <span class="value" id="infoSchool">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">注册时间：</span>
+                            <span class="value" id="infoCreatedAt">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Token状态：</span>
+                            <span class="value" id="tokenStatus">无效</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="logout()">退出登录</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <footer class="footer">
+            <p>Todo App &copy; 2024 | 使用Golang + Gin + GORM + SQLite构建</p>
+            <p class="server-status">服务器状态: <span id="serverStatus">检查中...</span></p>
+        </footer>
+    </div>
+
+    <!-- 消息提示 -->
+    <div id="toast" class="toast"></div>
+
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // 全局变量
+        let token = '';
+        let refreshToken = '';
+        let currentUser = null;
+        let tasks = [];
+        
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从本地存储加载token
+            const savedToken = localStorage.getItem('todo_token');
+            const savedRefreshToken = localStorage.getItem('todo_refresh_token');
+            const savedUser = localStorage.getItem('todo_user');
+            
+            if (savedToken && savedRefreshToken) {
+                token = savedToken;
+                refreshToken = savedRefreshToken;
+                
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    updateAuthStatus(true);
+                    showTaskPanel();
+                    loadUserProfile();
+                    refreshTasks();
+                }
+            }
+            
+            // 检查服务器状态
+            checkServerStatus();
+            
+            // 自动刷新token（如果存在）
+            if (token) {
+                autoRefreshToken();
+            }
+        });
+        
+        // 切换标签页
+        function switchTab(tabName) {
+            // 更新标签按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 激活选中的标签
+            if (tabName === 'login') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('loginTab').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('registerTab').classList.add('active');
+            }
+        }
+        
+        // 显示消息提示
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast';
+            
+            // 根据类型设置颜色
+            if (type === 'success') {
+                toast.style.background = '#28a745';
+            } else if (type === 'error') {
+                toast.style.background = '#dc3545';
+            } else if (type === 'warning') {
+                toast.style.background = '#ffc107';
+                toast.style.color = '#333';
+            }
+            
+            toast.classList.add('active');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3000);
+        }
+        
+        // 显示加载动画
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+        
+        // 隐藏加载动画
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+        
+        // 检查服务器状态
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('http://localhost:8080/health');
+                if (response.ok) {
+                    document.getElementById('serverStatus').textContent = '运行正常';
+                    document.getElementById('serverStatus').style.color = '#28a745';
+                } else {
+                    document.getElementById('serverStatus').textContent = '连接失败';
+                    document.getElementById('serverStatus').style.color = '#dc3545';
+                }
+            } catch (error) {
+                document.getElementById('serverStatus').textContent = '无法连接';
+                document.getElementById('serverStatus').style.color = '#dc3545';
+            }
+        }
+        
+        // 注册功能
+        async function register() {
+            const name = document.getElementById('registerName').value.trim();
+            const school = document.getElementById('registerSchool').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // 简单验证
+            if (!name || !password) {
+                showToast('用户名和密码不能为空', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showToast('密码至少需要6位字符', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showToast('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        school: school,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('注册成功！请登录', 'success');
+                    // 清空表单
+                    document.getElementById('registerName').value = '';
+                    document.getElementById('registerSchool').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    
+                    // 切换到登录标签页
+                    switchTab('login');
+                    // 自动填充用户名
+                    document.getElementById('loginName').value = name;
+                } else {
+                    showToast(data.message || '注册失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查服务器连接', 'error');
+                console.error('注册错误:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 登录功能
+        async function login() {
+            const name = document.getElementById('loginName').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!name || !password) {
+                showToast('用户名和密码不能为空', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 保存token和用户信息
+                    token = data.data.access_token;
+                    refreshToken = data.data.refresh_token;
+                    currentUser = data.data.student;
+                    
+                    // 保存到本地存储
+                    localStorage.setItem('todo_token', token);
+                    localStorage.setItem('todo_refresh_token', refreshToken);
+                    localStorage.setItem('todo_user', JSON.stringify(currentUser));
+                    
+                    showToast('登录成功！', 'success');
+                    
+                    // 更新界面
+                    updateAuthStatus(true);
+                    showTaskPanel();
+                    refreshTasks();
+                    
+                    // 清空登录表单
+                    document.getElementById('loginName').value = '';
+                    document.getElementById('loginPassword').value = '';
+                } else {
+                    showToast(data.message || '登录失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查服务器连接', 'error');
+                console.error('登录错误:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 更新认证状态显示
+        function updateAuthStatus(isLoggedIn) {
+            const authStatus = document.getElementById('authStatus');
+            
+            if (isLoggedIn && currentUser) {
+                authStatus.innerHTML = `
+                    <span class="status-text">已登录: ${currentUser.name}</span>
+                `;
+            } else {
+                authStatus.innerHTML = `
+                    <span class="status-text">未登录</span>
+                `;
+            }
+        }
+        
+        // 显示任务面板
+        function showTaskPanel() {
+            document.getElementById('authPanel').style.display = 'none';
+            document.getElementById('taskPanel').classList.add('active');
+        }
+        
+        // 显示认证面板
+        function showAuthPanel() {
+            document.getElementById('authPanel').style.display = 'block';
+            document.getElementById('taskPanel').classList.remove('active');
+        }
+        
+        // 加载用户信息
+        async function loadUserProfile() {
+            if (!token) return;
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.data;
+                    localStorage.setItem('todo_user', JSON.stringify(currentUser));
+                    updateAuthStatus(true);
+                } else if (response.status === 401) {
+                    // Token过期，尝试刷新
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        await loadUserProfile();
+                    }
+                }
+            } catch (error) {
+                console.error('加载用户信息错误:', error);
+            }
+        }
+        
+        // 刷新任务列表
+        async function refreshTasks() {
+            if (!token) {
+                showToast('请先登录', 'warning');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/tasks', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    tasks = data.data.tasks || [];
+                    renderTasks();
+                    updateTaskStats();
+                } else if (response.status === 401) {
+                    // Token过期，尝试刷新
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        await refreshTasks();
+                    } else {
+                        showToast('登录已过期，请重新登录', 'error');
+                        logout();
+                    }
+                } else {
+                    showToast('获取任务列表失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查服务器连接', 'error');
+                console.error('获取任务错误:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 渲染任务列表
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (tasks.length === 0) {
+                taskList.innerHTML = '';
+                taskList.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            // 按创建时间倒序排序
+            tasks.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            taskList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const taskItem = document.createElement('div');
+                taskItem.className = `task-item ${task.status ? 'completed' : ''}`;
+                taskItem.id = `task-${task.id}`;
+                
+                const formattedDate = new Date(task.created_at).toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                taskItem.innerHTML = `
+                    <div class="task-info">
+                        <div class="task-title ${task.status ? 'completed' : ''}">
+                            ${task.title}
+                        </div>
+                        <div class="task-meta">
+                            创建于: ${formattedDate}
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="action-btn complete-btn" onclick="toggleTaskStatus(${task.id}, ${!task.status})">
+                            ${task.status ? '↩' : '✓'}
+                        </button>
+                        <button class="action-btn edit-btn" onclick="editTask(${task.id})">
+                            ✎
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteTask(${task.id})">
+                            ×
+                        </button>
+                    </div>
+                `;
+                
+                taskList.appendChild(taskItem);
+            });
+        }
+        
+        // 更新任务统计
+        function updateTaskStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(task => task.status).length;
+            const pending = total - completed;
+            
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+        }
+        
+        // 显示添加任务模态框
+        function showAddTaskModal() {
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('addTaskModal').classList.add('active');
+            document.getElementById('taskTitle').focus();
+        }
+        
+        // 关闭添加任务模态框
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModal').classList.remove('active');
+        }
+        
+        // 添加任务
+        async function addTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            
+            if (!title) {
+                showToast('任务标题不能为空', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        title: title
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast('任务添加成功', 'success');
+                    closeAddTaskModal();
+                    refreshTasks();
+                } else if (response.status === 401) {
+                    // Token过期，尝试刷新
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        await addTask();
+                    }
+                } else {
+                    showToast('添加任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查服务器连接', 'error');
+                console.error('添加任务错误:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 切换任务状态
+        async function toggleTaskStatus(taskId, newStatus) {
+            showLoading();
+            
+            try {
+                const response = await fetch(`http://localhost:8080/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        status: newStatus
+                    })
+                });
+                
+                if (response.ok) {
+                    showToast(newStatus ? '任务标记为已完成' : '任务标记为未完成', 'success');
+                    refreshTasks();
+                } else if (response.status === 401) {
+                    // Token过期，尝试刷新
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        await toggleTaskStatus(taskId, newStatus);
+                    }
+                } else {
+                    showToast('更新任务状态失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查服务器连接', 'error');
+                console.error('更新任务错误:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 编辑任务
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            const newTitle = prompt('请输入新的任务标题:', task.title);
+            
+            if (newTitle && newTitle.trim() !== '' && newTitle !== task.title) {
+                updateTask(taskId, newTitle.trim());
+            }
+        }
+        
+        // 更新任务
+        async function updateTask(taskId, newTitle) {
+            showLoading();
+            
+            try {
+                const response = await fetch(`http://localhost:8080/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        title: newTitle
+                    })
+                });
+                
+                if (response.ok) {
+                    showToast('任务更新成功', 'success');
+                    refreshTasks();
+                } else if (response.status === 401) {
+                    // Token过期，尝试刷新
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        await updateTask(taskId, newTitle);
+                    }
+                } else {
+                    showToast('更新任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查服务器连接', 'error');
+                console.error('更新任务错误:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 删除任务
+        async function deleteTask(taskId) {
+            if (!confirm('确定要删除这个任务吗？')) {
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`http://localhost:8080/api/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast('任务删除成功', 'success');
+                    refreshTasks();
+                } else if (response.status === 401) {
+                    // Token过期，尝试刷新
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        await deleteTask(taskId);
+                    }
+                } else {
+                    showToast('删除任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请检查服务器连接', 'error');
+                console.error('删除任务错误:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 显示用户信息模态框
+        function showUserInfo() {
+            if (!currentUser) {
+                showToast('请先登录', 'warning');
+                return;
+            }
+            
+            // 填充用户信息
+            document.getElementById('infoName').textContent = currentUser.name || '-';
+            document.getElementById('infoSchool').textContent = currentUser.school || '-';
+            
+            if (currentUser.created_at) {
+                const createdDate = new Date(currentUser.created_at);
+                document.getElementById('infoCreatedAt').textContent = createdDate.toLocaleString('zh-CN');
+            } else {
+                document.getElementById('infoCreatedAt').textContent = '-';
+            }
+            
+            // 检查token状态
+            document.getElementById('tokenStatus').textContent = token ? '有效' : '无效';
+            document.getElementById('tokenStatus').style.color = token ? '#28a745' : '#dc3545';
+            
+            document.getElementById('userInfoModal').classList.add('active');
+        }
+        
+        // 关闭用户信息模态框
+        function closeUserInfoModal() {
+            document.getElementById('userInfoModal').classList.remove('active');
+        }
+        
+        // 刷新访问令牌
+        async function refreshAccessToken() {
+            if (!refreshToken) {
+                return false;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${refreshToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    token = data.data.access_token;
+                    localStorage.setItem('todo_token', token);
+                    showToast('Token已自动刷新', 'success');
+                    return true;
+                } else {
+                    console.error('刷新token失败');
+                    return false;
+                }
+            } catch (error) {
+                console.error('刷新token错误:', error);
+                return false;
+            }
+        }
+        
+        // 自动刷新token
+        function autoRefreshToken() {
+            // 每10分钟检查一次token是否需要刷新
+            setInterval(async () => {
+                if (token) {
+                    await refreshAccessToken();
+                }
+            }, 10 * 60 * 1000);
+        }
+        
+        // 退出登录
+        function logout() {
+            // 清除本地存储
+            localStorage.removeItem('todo_token');
+            localStorage.removeItem('todo_refresh_token');
+            localStorage.removeItem('todo_user');
+            
+            // 重置全局变量
+            token = '';
+            refreshToken = '';
+            currentUser = null;
+            tasks = [];
+            
+            // 更新界面
+            updateAuthStatus(false);
+            showAuthPanel();
+            closeUserInfoModal();
+            
+            // 重置任务统计
+            document.getElementById('totalTasks').textContent = '0';
+            document.getElementById('completedTasks').textContent = '0';
+            document.getElementById('pendingTasks').textContent = '0';
+            
+            showToast('已退出登录', 'info');
+        }
+        
+        // 全局键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            // Ctrl+Enter 提交表单
+            if (event.ctrlKey && event.key === 'Enter') {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab.id === 'loginTab') {
+                    login();
+                } else if (activeTab.id === 'registerTab') {
+                    register();
+                }
+            }
+            
+            // Esc 关闭模态框
+            if (event.key === 'Escape') {
+                closeAddTaskModal();
+                closeUserInfoModal();
+            }
+            
+            // F5 刷新任务列表
+            if (event.key === 'F5') {
+                event.preventDefault();
+                if (token) {
+                    refreshTasks();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
